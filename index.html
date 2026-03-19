@@ -237,6 +237,11 @@ async function handlePay(e){
   const btn=document.getElementById('pay-btn');
   btn.textContent='Creating payment link…';
   btn.disabled=true;
+  // Save form data before leaving page
+  const fd={};
+  document.querySelectorAll('#dyn-form input,#dyn-form textarea').forEach(el=>{fd[el.id]=el.value.trim();});
+  localStorage.setItem('justdocs_form',JSON.stringify(fd));
+  localStorage.setItem('justdocs_type',docType);
   try{
     const res=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'createPaymentLink',docType:NAMES[docType],amount:PRICES[docType]})});
     const data=await res.json();
@@ -273,7 +278,19 @@ function copyDoc(){navigator.clipboard.writeText(genDoc).then(()=>{const b=event
 function dlDoc(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([genDoc],{type:'text/plain'}));a.download=NAMES[docType].replace(/\s+/g,'_')+'.txt';a.click();}
 function goStep(n){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));document.getElementById('loading').style.display='none';if(n>=1&&n<=4)document.getElementById('panel'+n).classList.add('active');setSteps(n);window.scrollTo({top:0,behavior:'smooth'});}
 function setSteps(active){for(let i=1;i<=4;i++){const t=document.getElementById('s'+i);t.classList.remove('active','done');if(i<active)t.classList.add('done');if(i===active)t.classList.add('active');}}
-if(window.location.search.includes('paid=true'))setTimeout(generateDoc,400);
+if(window.location.search.includes('paid=true')){
+  const savedType=localStorage.getItem('justdocs_type');
+  const savedForm=localStorage.getItem('justdocs_form');
+  if(savedType&&savedForm){
+    docType=savedType;
+    document.getElementById('dyn-form').innerHTML=FORMS[docType];
+    const fd=JSON.parse(savedForm);
+    Object.keys(fd).forEach(key=>{const el=document.getElementById(key);if(el)el.value=fd[key];});
+    localStorage.removeItem('justdocs_type');
+    localStorage.removeItem('justdocs_form');
+    setTimeout(generateDoc,400);
+  }
+}
 </script>
 </body>
 </html>
