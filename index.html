@@ -167,8 +167,8 @@ footer a{color:var(--accent2);text-decoration:none}
       <div class="pay-row"><span class="lbl">Turnaround</span><span class="val">Under 60 seconds</span></div>
       <div class="pay-row total"><span class="lbl">Total</span><span class="val" id="pay-amt">$3.99</span></div>
     </div>
-    <a href="YOUR_STRIPE_PAYMENT_LINK_HERE" class="btn btn-primary" id="pay-btn" onclick="handlePay(event)">Pay Securely with Stripe →</a>
-    <p class="secure-note"><span>🔒 Secured by Stripe</span> · Your card never touches our servers · Instant access after payment</p>
+    <button class="btn btn-primary" id="pay-btn" onclick="handlePay(event)">Pay Securely with Square →</button>
+    <p class="secure-note"><span>🔒 Secured by Square</span> · Your card never touches our servers · Instant access after payment</p>
   </div>
 
   <!-- LOADING -->
@@ -194,7 +194,7 @@ footer a{color:var(--accent2);text-decoration:none}
 <div class="trust">
   <div class="trust-item"><em>⚖️</em> Plain-language legal writing</div>
   <div class="trust-item"><em>⚡</em> Ready in under 60 seconds</div>
-  <div class="trust-item"><em>🔒</em> Payments secured by Stripe</div>
+  <div class="trust-item"><em>🔒</em> Payments secured by Square</div>
   <div class="trust-item"><em>💸</em> 97% cheaper than a lawyer</div>
 </div>
 
@@ -232,7 +232,27 @@ let docType=null,genDoc='';
 function selectDoc(btn){document.querySelectorAll('.doc-btn').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');docType=btn.dataset.type;document.getElementById('next1').disabled=false;}
 function goStep2(){if(!docType)return;document.getElementById('form-title').textContent='Details for your '+NAMES[docType];document.getElementById('dyn-form').innerHTML=FORMS[docType];goStep(2);}
 function goStep3(){const inputs=document.querySelectorAll('#panel2 [required]');for(const i of inputs){if(!i.value.trim()){document.getElementById('form-err').style.display='block';i.focus();return;}}document.getElementById('form-err').style.display='none';document.getElementById('pay-type').textContent=NAMES[docType];document.getElementById('pay-amt').textContent='$'+PRICES[docType].toFixed(2);goStep(3);}
-function handlePay(e){const href=document.getElementById('pay-btn').getAttribute('href');if(!href||href==='YOUR_STRIPE_PAYMENT_LINK_HERE'){e.preventDefault();generateDoc();}}
+async function handlePay(e){
+  e.preventDefault();
+  const btn=document.getElementById('pay-btn');
+  btn.textContent='Creating payment link…';
+  btn.disabled=true;
+  try{
+    const res=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'createPaymentLink',docType:NAMES[docType],amount:PRICES[docType]})});
+    const data=await res.json();
+    if(data.url){
+      window.location.href=data.url;
+    }else{
+      btn.textContent='Pay Securely with Square →';
+      btn.disabled=false;
+      alert('Could not create payment link. Please try again.');
+    }
+  }catch(err){
+    btn.textContent='Pay Securely with Square →';
+    btn.disabled=false;
+    alert('Payment error. Please try again.');
+  }
+}
 async function generateDoc(){
   const fd={};document.querySelectorAll('#dyn-form input,#dyn-form textarea').forEach(el=>{fd[el.id]=el.value.trim();});
   const prompt=PROMPTS[docType](fd);
