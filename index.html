@@ -115,7 +115,7 @@ footer a{color:var(--accent2);text-decoration:none}
   <p class="hero-sub">Demand letters, cease &amp; desist, landlord notices, dispute letters, NDAs — drafted by AI in under 60 seconds. <strong>97% cheaper than an attorney.</strong></p>
   <div class="price-strip">
     <div class="price-pill"><strong>From $3.99</strong> per document</div>
-    <div class="price-pill"><strong>No</strong> subscription needed</div>
+    <div class="price-pill"><strong>Pay once</strong> download instantly</div>
     <div class="price-pill"><strong>No</strong> account required</div>
   </div>
 </div>
@@ -237,13 +237,12 @@ async function handlePay(e){
   const btn=document.getElementById('pay-btn');
   btn.textContent='Creating payment link…';
   btn.disabled=true;
-  // Save form data before leaving page
   const fd={};
   document.querySelectorAll('#dyn-form input,#dyn-form textarea').forEach(el=>{fd[el.id]=el.value.trim();});
   localStorage.setItem('justdocs_form',JSON.stringify(fd));
   localStorage.setItem('justdocs_type',docType);
   try{
-    const res=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'createPaymentLink',docType:NAMES[docType],amount:PRICES[docType]})});
+    const res=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'createPaymentLink',docType:NAMES[docType],amount:PRICES[docType],redirectUrl:'https://contactinfinitysolutionsllc-ops.github.io/justdocs/?paid=true'})});
     const data=await res.json();
     if(data.url){
       window.location.href=data.url;
