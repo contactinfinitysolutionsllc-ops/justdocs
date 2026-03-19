@@ -1,128 +1,55 @@
-// ============================================================
-// JustDocs AI — Cloudflare Worker
-// Proxies requests to Claude API so your key stays secret
-// Deploy at: https://workers.cloudflare.com (free account)
-// ============================================================
+// Copyright 2025 Infinity Solutions LLC. All Rights Reserved.
+// Cloudflare Worker — proxies JustDocs requests to Apps Script
+// Deploy at: dash.cloudflare.com → Workers & Pages → justdocs-worker
 
-const ALLOWED_ORIGIN = '*'; // Replace with your GitHub Pages URL e.g. 'https://yourusername.github.io'
-const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
-const MODEL = 'claude-sonnet-4-20250514';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyqYgj0u72U_QUAyvbVkhb7T0Bc75B_TxMIbvJJZFO260GwtGjGKkUrCLmD68afQKDS/exec';
 
-// Rate limiting (simple in-memory — resets on worker restart)
-const requestCounts = new Map();
-const RATE_LIMIT = 10; // max requests per IP per hour
-const RATE_WINDOW = 60 * 60 * 1000; // 1 hour in ms
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+};
 
 export default {
-  async fetch(request, env) {
+  async fetch(request) {
 
     // Handle CORS preflight
     if (request.method === 'OPTIONS') {
-      return new Response(null, {
-        headers: {
-          'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
-          'Access-Control-Allow-Methods': 'POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type',
-        }
-      });
+      return new Response(null, { status: 204, headers: CORS });
     }
 
-    // Only allow POST
     if (request.method !== 'POST') {
-      return new Response('Method not allowed', { status: 405 });
+      return new Response('Method not allowed', { status: 405, headers: CORS });
     }
 
-    // Basic rate limiting by IP
-    const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
-    const now = Date.now();
-    const entry = requestCounts.get(ip) || { count: 0, resetAt: now + RATE_WINDOW };
-
-    if (now > entry.resetAt) {
-      entry.count = 0;
-      entry.resetAt = now + RATE_WINDOW;
-    }
-
-    entry.count++;
-    requestCounts.set(ip, entry);
-
-    if (entry.count > RATE_LIMIT) {
-      return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }), {
-        status: 429,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
-        }
-      });
-    }
-
-    // Parse the request body
     let body;
     try {
       body = await request.json();
     } catch {
-      return new Response(JSON.stringify({ error: 'Invalid JSON' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': ALLOWED_ORIGIN }
-      });
+      return json({ error: 'Invalid JSON' }, 400);
     }
 
-    const { prompt } = body;
-
-    if (!prompt || typeof prompt !== 'string' || prompt.length > 4000) {
-      return new Response(JSON.stringify({ error: 'Invalid prompt' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': ALLOWED_ORIGIN }
-      });
-    }
-
-    // Call Claude API — API key stored securely in Worker environment variable
+    // Forward to Apps Script
     try {
-      const claudeResponse = await fetch(CLAUDE_API_URL, {
+      const response = await fetch(APPS_SCRIPT_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': env.ANTHROPIC_API_KEY, // Set this in Cloudflare dashboard
-          'anthropic-version': '2023-06-01',
-        },
-        body: JSON.stringify({
-          model: MODEL,
-          max_tokens: 1500,
-          system: `You are a professional legal document drafter. You write clear, firm, professional letters and documents for everyday people who cannot afford attorneys. 
-
-Your documents:
-- Are properly formatted with date, addresses, subject line, body, and signature block
-- Use professional but accessible language
-- Reference relevant laws when appropriate (FDCPA, FCRA, tenant rights, etc.)
-- Are ready to send without editing
-- Include [YOUR SIGNATURE] placeholder at the end
-- Do NOT include legal advice disclaimers inside the document itself (the website handles that)
-- Today's date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`,
-          messages: [{ role: 'user', content: prompt }]
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        redirect: 'follow'
       });
 
-      if (!claudeResponse.ok) {
-        const errText = await claudeResponse.text();
-        console.error('Claude API error:', errText);
-        throw new Error('Claude API error: ' + claudeResponse.status);
-      }
-
-      const claudeData = await claudeResponse.json();
-      const result = claudeData.content?.[0]?.text || 'Document generation failed.';
-
-      return new Response(JSON.stringify({ result }), {
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
-        }
-      });
+      const data = await response.json();
+      return json(data);
 
     } catch (err) {
-      console.error('Worker error:', err);
-      return new Response(JSON.stringify({ error: 'Failed to generate document. Please try again.' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': ALLOWED_ORIGIN }
-      });
+      return json({ error: 'Failed to reach API: ' + err.message }, 500);
     }
   }
 };
+
+function json(data, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...CORS, 'Content-Type': 'application/json' }
+  });
+}
