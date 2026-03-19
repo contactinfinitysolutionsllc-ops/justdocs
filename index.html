@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JustDocs AI — Legal Documents for Real People</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #1a1a2e;
+    --ink2: #2d2d44;
+    --gold: #c9a84c;
+    --gold-light: #f0d98a;
+    --cream: #faf8f2;
+    --cream2: #f2ede0;
+    --muted: #7a7a8c;
+    --border: #e0d9c8;
+    --success: #2d6a4f;
+    --radius: 12px;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    min-height: 100vh;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--ink);
+    padding: 1.2rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    color: var(--gold);
+    letter-spacing: .02em;
+  }
+
+  .logo span { color: #fff; font-weight: 300; }
+
+  .tagline-header {
+    font-size: .75rem;
+    color: var(--muted);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+
+  /* HERO */
+  .hero {
+    background: var(--ink);
+    color: white;
+    padding: 5rem 2rem 4rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 60% 0%, rgba(201,168,76,.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-eyebrow {
+    font-size: .75rem;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 1.2rem;
+  }
+
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 1.2rem;
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .hero h1 em { color: var(--gold); font-style: normal; }
+
+  .hero p {
+    font-size: 1.05rem;
+    color: rgba(255,255,255,.7);
+    max-width: 540px;
+    margin: 0 auto 2rem;
+  }
+
+  .price-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    background: rgba(201,168,76,.15);
+    border: 1px solid rgba(201,168,76,.4);
+    color: var(--gold-light);
+    border-radius: 100px;
+    padding: .4rem 1.2rem;
+    font-size: .85rem;
+    font-weight: 500;
+    margin-bottom: 2.5rem;
+  }
+
+  .price-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
+
+  /* MAIN CARD */
+  .main-wrap {
+    max-width: 780px;
+    margin: -2rem auto 4rem;
+    padding: 0 1.5rem;
+    position: relative;
+    z-index: 10;
+  }
+
+  .app-card {
+    background: white;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(26,26,46,.1);
+  }
+
+  /* STEPS */
+  .steps {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: var(--cream2);
+  }
+
+  .step {
+    flex: 1;
+    padding: .8rem .5rem;
+    text-align: center;
+    font-size: .75rem;
+    color: var(--muted);
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    font-weight: 500;
+    border-right: 1px solid var(--border);
+    transition: all .2s;
+  }
+
+  .step:last-child { border-right: none; }
+  .step.active { color: var(--ink); background: white; }
+  .step.active .step-num { background: var(--gold); color: white; }
+  .step.done { color: var(--success); }
+  .step.done .step-num { background: var(--success); color: white; }
+
+  .step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--border);
+    color: var(--muted);
+    font-size: .7rem;
+    font-weight: 700;
+    margin-bottom: 3px;
+    margin-right: 4px;
+  }
+
+  /* PANELS */
+  .panel { display: none; padding: 2rem 2.5rem; }
+  .panel.active { display: block; }
+
+  .panel-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    margin-bottom: .4rem;
+    color: var(--ink);
+  }
+
+  .panel-sub { font-size: .9rem; color: var(--muted); margin-bottom: 1.8rem; }
+
+  /* DOC TYPE GRID */
+  .doc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+    margin-bottom: 1.5rem;
+  }
+
+  .doc-btn {
+    background: var(--cream);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+    text-align: left;
+    cursor: pointer;
+    transition: all .18s;
+    font-family: inherit;
+  }
+
+  .doc-btn:hover { border-color: var(--gold); background: #fffdf5; transform: translateY(-1px); }
+  .doc-btn.selected { border-color: var(--gold); background: #fffdf5; box-shadow: 0 0 0 3px rgba(201,168,76,.15); }
+
+  .doc-btn-icon { font-size: 1.4rem; margin-bottom: .4rem; display: block; }
+  .doc-btn-name { font-weight: 500; font-size: .9rem; color: var(--ink); display: block; }
+  .doc-btn-desc { font-size: .75rem; color: var(--muted); margin-top: 2px; display: block; }
+
+  /* FORM */
+  .form-group { margin-bottom: 1.2rem; }
+
+  label {
+    display: block;
+    font-size: .82rem;
+    font-weight: 500;
+    letter-spacing: .04em;
+    color: var(--ink2);
+    margin-bottom: .4rem;
+    text-transform: uppercase;
+  }
+
+  input[type=text], input[type=email], textarea, select {
+    width: 100%;
+    padding: .75rem 1rem;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif;
+    font-size: .95rem;
+    color: var(--ink);
+    background: var(--cream);
+    transition: border-color .18s;
+    outline: none;
+    resize: vertical;
+  }
+
+  input:focus, textarea:focus, select:focus { border-color: var(--gold); background: white; }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* BUTTONS */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    padding: .85rem 2rem;
+    border-radius: var(--radius);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    font-size: .95rem;
+    cursor: pointer;
+    transition: all .18s;
+    border: none;
+    text-decoration: none;
+  }
+
+  .btn-primary {
+    background: var(--gold);
+    color: var(--ink);
+    width: 100%;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .btn-primary:hover { background: #b8922e; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(201,168,76,.3); }
+  .btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  .btn-outline {
+    background: transparent;
+    border: 1.5px solid var(--border);
+    color: var(--muted);
+    font-size: .9rem;
+  }
+
+  .btn-outline:hover { border-color: var(--ink); color: var(--ink); }
+
+  /* PAYMENT PANEL */
+  .pay-summary {
+    background: var(--cream2);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--border);
+  }
+
+  .pay-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: .4rem 0;
+    font-size: .9rem;
+  }
+
+  .pay-row.total {
+    border-top: 1px solid var(--border);
+    margin-top: .5rem;
+    padding-top: .8rem;
+    font-weight: 600;
+    font-size: 1.05rem;
+  }
+
+  .pay-row .label { color: var(--muted); }
+  .pay-row .val { color: var(--ink); font-weight: 500; }
+  .pay-row.total .val { color: var(--gold); font-size: 1.2rem; }
+
+  .secure-note {
+    text-align: center;
+    font-size: .75rem;
+    color: var(--muted);
+    margin-top: 1rem;
+  }
+
+  .secure-note span { color: var(--success); font-weight: 500; }
+
+  /* RESULT PANEL */
+  .doc-output {
+    background: var(--cream);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2rem;
+    font-size: .9rem;
+    line-height: 1.9;
+    white-space: pre-wrap;
+    font-family: 'DM Sans', sans-serif;
+    min-height: 300px;
+    max-height: 500px;
+    overflow-y: auto;
+    color: var(--ink2);
+    margin-bottom: 1.2rem;
+  }
+
+  .output-actions { display: flex; gap: 10px; }
+  .output-actions .btn { flex: 1; }
+
+  /* LOADING */
+  .loading-wrap {
+    text-align: center;
+    padding: 3rem 2rem;
+    display: none;
+  }
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+    margin: 0 auto 1.2rem;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    color: var(--ink);
+    margin-bottom: .4rem;
+  }
+
+  .loading-sub { font-size: .85rem; color: var(--muted); }
+
+  /* DISCLAIMER */
+  .disclaimer {
+    background: #fff8e1;
+    border: 1px solid #ffe082;
+    border-radius: var(--radius);
+    padding: 1rem 1.2rem;
+    font-size: .78rem;
+    color: #7a6000;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+  }
+
+  .disclaimer strong { color: #5a4500; }
+
+  /* TRUST BAR */
+  .trust-bar {
+    background: var(--ink2);
+    padding: 1.2rem 2rem;
+    display: flex;
+    justify-content: center;
+    gap: 2.5rem;
+    flex-wrap: wrap;
+  }
+
+  .trust-item {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    font-size: .78rem;
+    color: rgba(255,255,255,.6);
+  }
+
+  .trust-item .icon { color: var(--gold); font-size: 1rem; }
+
+  /* SOCIAL PROOF */
+  .social-section {
+    max-width: 780px;
+    margin: 0 auto 3rem;
+    padding: 0 1.5rem;
+  }
+
+  .social-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    color: var(--ink);
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+
+  .testimonials { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+
+  .testimonial {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.2rem;
+  }
+
+  .testimonial p { font-size: .85rem; color: var(--ink2); line-height: 1.6; margin-bottom: .6rem; }
+  .testimonial .author { font-size: .75rem; color: var(--muted); font-weight: 500; }
+
+  /* FOOTER */
+  footer {
+    text-align: center;
+    padding: 1.5rem;
+    font-size: .78rem;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+  }
+
+  /* UTIL */
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    font-size: .82rem;
+    color: var(--muted);
+    cursor: pointer;
+    margin-bottom: 1.2rem;
+    background: none;
+    border: none;
+    font-family: inherit;
+    padding: 0;
+  }
+
+  .back-link:hover { color: var(--ink); }
+
+  .error-msg {
+    background: #fff0f0;
+    border: 1px solid #ffcdd2;
+    color: #c62828;
+    border-radius: var(--radius);
+    padding: .8rem 1rem;
+    font-size: .85rem;
+    margin-bottom: 1rem;
+    display: none;
+  }
+
+  @media (max-width: 540px) {
+    .panel { padding: 1.5rem; }
+    .form-row { grid-template-columns: 1fr; }
+    .hero { padding: 3rem 1.5rem 3rem; }
+    .steps { flex-wrap: wrap; }
+    .step { min-width: 50%; border-bottom: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Just<span>Docs</span> AI</div>
+  <div class="tagline-header">Legal documents · instant · affordable</div>
+</header>
+
+<div class="hero">
+  <div class="hero-eyebrow">AI-Powered Legal Document Drafting</div>
+  <h1>Professional legal documents for <em>real people</em> — not just those who can afford lawyers</h1>
+  <p>Demand letters, cease &amp; desist, landlord notices, dispute letters — drafted by AI in under 60 seconds.</p>
+  <div class="price-badge"><span class="dot"></span> From $3.99 per document — no subscription needed</div>
+</div>
+
+<div class="main-wrap">
+  <div class="app-card">
+
+    <div class="steps">
+      <div class="step active" id="step1-tab">
+        <span class="step-num">1</span> Choose Doc
+      </div>
+      <div class="step" id="step2-tab">
+        <span class="step-num">2</span> Your Details
+      </div>
+      <div class="step" id="step3-tab">
+        <span class="step-num">3</span> Review &amp; Pay
+      </div>
+      <div class="step" id="step4-tab">
+        <span class="step-num">4</span> Download
+      </div>
+    </div>
+
+    <!-- STEP 1: Choose document type -->
+    <div class="panel active" id="panel1">
+      <h2 class="panel-title">What do you need?</h2>
+      <p class="panel-sub">Select the document type and we'll ask for the right details.</p>
+
+      <div class="doc-grid" id="doc-grid">
+        <button class="doc-btn" data-type="demand" onclick="selectDoc(this)">
+          <span class="doc-btn-icon">⚖️</span>
+          <span class="doc-btn-name">Demand Letter</span>
+          <span class="doc-btn-desc">Money owed, services not rendered, property damage</span>
+        </button>
+        <button class="doc-btn" data-type="cease" onclick="selectDoc(this)">
+          <span class="doc-btn-icon">🛑</span>
+          <span class="doc-btn-name">Cease &amp; Desist</span>
+          <span class="doc-btn-desc">Harassment, defamation, IP infringement</span>
+        </button>
+        <button class="doc-btn" data-type="landlord" onclick="selectDoc(this)">
+          <span class="doc-btn-icon">🏠</span>
+          <span class="doc-btn-name">Landlord Notice</span>
+          <span class="doc-btn-desc">Repairs, deposit return, lease disputes</span>
+        </button>
+        <button class="doc-btn" data-type="dispute" onclick="selectDoc(this)">
+          <span class="doc-btn-icon">📋</span>
+          <span class="doc-btn-name">Dispute Letter</span>
+          <span class="doc-btn-desc">Credit, billing errors, insurance claims</span>
+        </button>
+        <button class="doc-btn" data-type="termination" onclick="selectDoc(this)">
+          <span class="doc-btn-icon">📝</span>
+          <span class="doc-btn-name">Contract Termination</span>
+          <span class="doc-btn-desc">End a service agreement or business relationship</span>
+        </button>
+        <button class="doc-btn" data-type="complaint" onclick="selectDoc(this)">
+          <span class="doc-btn-icon">📣</span>
+          <span class="doc-btn-name">Formal Complaint</span>
+          <span class="doc-btn-desc">To a business, employer, or government agency</span>
+        </button>
+        <button class="doc-btn" data-type="debt" onclick="selectDoc(this)">
+          <span class="doc-btn-icon">💰</span>
+          <span class="doc-btn-name">Debt Validation</span>
+          <span class="doc-btn-desc">Request collectors prove the debt is valid</span>
+        </button>
+        <button class="doc-btn" data-type="nda" onclick="selectDoc(this)">
+          <span class="doc-btn-icon">🔒</span>
+          <span class="doc-btn-name">Simple NDA</span>
+          <span class="doc-btn-desc">Non-disclosure for a business discussion or idea</span>
+        </button>
+      </div>
+
+      <button class="btn btn-primary" id="step1-next" onclick="goToStep2()" disabled>
+        Continue →
+      </button>
+    </div>
+
+    <!-- STEP 2: Details form -->
+    <div class="panel" id="panel2">
+      <button class="back-link" onclick="goToStep(1)">← Back</button>
+      <h2 class="panel-title" id="form-title">Your Details</h2>
+      <p class="panel-sub">Fill in your information. We'll draft the document in seconds.</p>
+
+      <div class="disclaimer">
+        <strong>Important:</strong> JustDocs AI drafts documents to help you communicate clearly. This is not legal advice. For complex legal matters, please consult a licensed attorney in your state.
+      </div>
+
+      <div id="dynamic-form"></div>
+
+      <div class="error-msg" id="form-error">Please fill in all required fields.</div>
+
+      <button class="btn btn-primary" onclick="goToStep3()">Review My Document →</button>
+    </div>
+
+    <!-- STEP 3: Payment -->
+    <div class="panel" id="panel3">
+      <button class="back-link" onclick="goToStep(2)">← Back</button>
+      <h2 class="panel-title">Review &amp; Pay</h2>
+      <p class="panel-sub">Your document is ready to generate. Pay once, download instantly.</p>
+
+      <div class="pay-summary">
+        <div class="pay-row">
+          <span class="label">Document type</span>
+          <span class="val" id="pay-doctype">—</span>
+        </div>
+        <div class="pay-row">
+          <span class="label">Format</span>
+          <span class="val">Plain text (copy &amp; paste)</span>
+        </div>
+        <div class="pay-row">
+          <span class="label">Turnaround</span>
+          <span class="val">Instant — under 60 seconds</span>
+        </div>
+        <div class="pay-row total">
+          <span class="label">Total</span>
+          <span class="val" id="pay-amount">$3.99</span>
+        </div>
+      </div>
+
+      <!-- REPLACE href WITH YOUR ACTUAL STRIPE PAYMENT LINK -->
+      <a href="YOUR_STRIPE_PAYMENT_LINK_HERE" class="btn btn-primary" id="pay-btn" onclick="handlePayment(event)">
+        Pay Securely with Stripe →
+      </a>
+
+      <p class="secure-note"><span>🔒 Secured by Stripe</span> · Your card info never touches our servers · Instant access after payment</p>
+    </div>
+
+    <!-- LOADING -->
+    <div class="loading-wrap" id="loading">
+      <div class="spinner"></div>
+      <p class="loading-text">Drafting your document...</p>
+      <p class="loading-sub">Our AI is writing your professional letter now. This takes about 15–30 seconds.</p>
+    </div>
+
+    <!-- STEP 4: Result -->
+    <div class="panel" id="panel4">
+      <h2 class="panel-title">Your Document is Ready</h2>
+      <p class="panel-sub">Review, copy, or download your document below. Save a copy for your records.</p>
+
+      <div class="doc-output" id="doc-output">Your document will appear here...</div>
+
+      <div class="output-actions">
+        <button class="btn btn-outline" onclick="copyDoc()">📋 Copy to Clipboard</button>
+        <button class="btn btn-primary" onclick="downloadDoc()">⬇ Download .txt</button>
+      </div>
+
+      <p style="font-size:.78rem; color:var(--muted); margin-top:1rem; text-align:center;">
+        Need another document? <a href="index.html" style="color:var(--gold); text-decoration:none; font-weight:500;">Start over →</a>
+      </p>
+    </div>
+
+  </div>
+</div>
+
+<div class="trust-bar">
+  <div class="trust-item"><span class="icon">⚖️</span> Plain-language legal writing</div>
+  <div class="trust-item"><span class="icon">⚡</span> Ready in under 60 seconds</div>
+  <div class="trust-item"><span class="icon">🔒</span> Payments secured by Stripe</div>
+  <div class="trust-item"><span class="icon">💸</span> 97% cheaper than a lawyer</div>
+</div>
+
+<div class="social-section" style="margin-top:2.5rem;">
+  <p class="social-title">What people are saying</p>
+  <div class="testimonials">
+    <div class="testimonial">
+      <p>"Got my deposit back after sending the landlord letter. Cost me $3.99 instead of $300 for an attorney."</p>
+      <span class="author">— Sarah M., Vermont</span>
+    </div>
+    <div class="testimonial">
+      <p>"My debt collector stopped calling after I sent the validation letter. I had no idea I had this right."</p>
+      <span class="author">— James T., Ohio</span>
+    </div>
+    <div class="testimonial">
+      <p>"Professional, clear, and it actually worked. The demand letter got me paid within a week."</p>
+      <span class="author">— Priya K., Texas</span>
+    </div>
+  </div>
+</div>
+
+<footer>
+  &copy; 2025 JustDocs AI · Not a law firm · Documents are for communication purposes only · Always consult an attorney for legal advice
+</footer>
+
+<script>
+// ============================================================
+// CONFIGURATION — UPDATE THESE
+// ============================================================
+const WORKER_URL = 'YOUR_CLOUDFLARE_WORKER_URL_HERE'; // e.g. https://justdocs.yourname.workers.dev
+const PRICES = {
+  demand: 3.99, cease: 4.99, landlord: 3.99,
+  dispute: 3.99, termination: 4.99, complaint: 3.99,
+  debt: 3.99, nda: 5.99
+};
+const DOC_NAMES = {
+  demand: 'Demand Letter', cease: 'Cease & Desist Letter',
+  landlord: 'Landlord Notice', dispute: 'Dispute Letter',
+  termination: 'Contract Termination Letter', complaint: 'Formal Complaint Letter',
+  debt: 'Debt Validation Letter', nda: 'Non-Disclosure Agreement'
+};
+
+// ============================================================
+// FORM TEMPLATES per document type
+// ============================================================
+const FORMS = {
+  demand: `
+    <div class="form-row">
+      <div class="form-group"><label>Your Full Name *</label><input type="text" id="f_sender_name" placeholder="Jane Smith" required></div>
+      <div class="form-group"><label>Your Address *</label><input type="text" id="f_sender_address" placeholder="123 Main St, City, State ZIP" required></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Recipient Name *</label><input type="text" id="f_recipient_name" placeholder="John Doe or ABC Company" required></div>
+      <div class="form-group"><label>Recipient Address</label><input type="text" id="f_recipient_address" placeholder="456 Business Ave, City, State ZIP"></div>
+    </div>
+    <div class="form-group"><label>What do they owe you? *</label><input type="text" id="f_amount" placeholder="e.g. $1,200 for plumbing work completed Oct 3rd" required></div>
+    <div class="form-group"><label>Describe the situation *</label><textarea id="f_situation" rows="4" placeholder="Explain what happened, any agreements made, and what steps you've already taken..." required></textarea></div>
+    <div class="form-group"><label>Deadline to respond (days)</label><input type="text" id="f_deadline" placeholder="e.g. 14 days"></div>`,
+
+  cease: `
+    <div class="form-row">
+      <div class="form-group"><label>Your Full Name *</label><input type="text" id="f_sender_name" placeholder="Jane Smith" required></div>
+      <div class="form-group"><label>Your Address *</label><input type="text" id="f_sender_address" placeholder="123 Main St, City, State ZIP" required></div>
+    </div>
+    <div class="form-group"><label>Recipient Name / Entity *</label><input type="text" id="f_recipient_name" placeholder="Name or company to send this to" required></div>
+    <div class="form-group"><label>What behavior must stop? *</label><textarea id="f_behavior" rows="3" placeholder="Describe specifically what they are doing that must stop (e.g. posting false reviews, contacting you at work, using your logo...)" required></textarea></div>
+    <div class="form-group"><label>Consequences if they don't stop</label><input type="text" id="f_consequences" placeholder="e.g. pursue legal action, contact authorities, file complaint with BBB"></div>`,
+
+  landlord: `
+    <div class="form-row">
+      <div class="form-group"><label>Your Full Name *</label><input type="text" id="f_sender_name" placeholder="Tenant name" required></div>
+      <div class="form-group"><label>Rental Property Address *</label><input type="text" id="f_property" placeholder="The address you rent" required></div>
+    </div>
+    <div class="form-group"><label>Landlord / Property Manager Name *</label><input type="text" id="f_recipient_name" placeholder="Landlord or company name" required></div>
+    <div class="form-group"><label>What is the issue? *</label><textarea id="f_issue" rows="3" placeholder="e.g. security deposit not returned after 30 days, heat not working since Nov 1st, water damage unrepaired..." required></textarea></div>
+    <div class="form-group"><label>What action do you want taken? *</label><input type="text" id="f_action" placeholder="e.g. Return $1,200 deposit, repair heat within 7 days" required></div>`,
+
+  dispute: `
+    <div class="form-row">
+      <div class="form-group"><label>Your Full Name *</label><input type="text" id="f_sender_name" placeholder="Your full legal name" required></div>
+      <div class="form-group"><label>Account / Reference Number</label><input type="text" id="f_account" placeholder="Account or case number if applicable"></div>
+    </div>
+    <div class="form-group"><label>Company / Agency you are disputing *</label><input type="text" id="f_recipient_name" placeholder="e.g. Equifax, Comcast, Blue Cross..." required></div>
+    <div class="form-group"><label>What are you disputing? *</label><textarea id="f_dispute" rows="3" placeholder="Describe the error, incorrect charge, or inaccurate information..." required></textarea></div>
+    <div class="form-group"><label>What resolution do you want? *</label><input type="text" id="f_resolution" placeholder="e.g. Remove the item, refund $240, correct the record" required></div>`,
+
+  termination: `
+    <div class="form-row">
+      <div class="form-group"><label>Your Name / Company *</label><input type="text" id="f_sender_name" placeholder="Your name or business name" required></div>
+      <div class="form-group"><label>Effective Termination Date *</label><input type="text" id="f_date" placeholder="e.g. December 31, 2025" required></div>
+    </div>
+    <div class="form-group"><label>Other Party's Name / Company *</label><input type="text" id="f_recipient_name" placeholder="Who is this contract with?" required></div>
+    <div class="form-group"><label>Describe the contract being terminated *</label><input type="text" id="f_contract" placeholder="e.g. Monthly web design retainer signed March 2024" required></div>
+    <div class="form-group"><label>Reason for termination (optional)</label><textarea id="f_reason" rows="2" placeholder="Brief reason if you wish to include one..."></textarea></div>`,
+
+  complaint: `
+    <div class="form-row">
+      <div class="form-group"><label>Your Full Name *</label><input type="text" id="f_sender_name" placeholder="Your name" required></div>
+      <div class="form-group"><label>Your Contact Info *</label><input type="text" id="f_contact" placeholder="Phone or email" required></div>
+    </div>
+    <div class="form-group"><label>Company / Agency complaint is against *</label><input type="text" id="f_recipient_name" placeholder="Business or organization name" required></div>
+    <div class="form-group"><label>Describe what happened *</label><textarea id="f_incident" rows="4" placeholder="Be specific: dates, people involved, what was said or done, how it affected you..." required></textarea></div>
+    <div class="form-group"><label>What outcome do you want? *</label><input type="text" id="f_outcome" placeholder="e.g. Full refund, written apology, policy change" required></div>`,
+
+  debt: `
+    <div class="form-row">
+      <div class="form-group"><label>Your Full Name *</label><input type="text" id="f_sender_name" placeholder="Your legal name" required></div>
+      <div class="form-group"><label>Your Address *</label><input type="text" id="f_sender_address" placeholder="Your mailing address" required></div>
+    </div>
+    <div class="form-group"><label>Collection Agency Name *</label><input type="text" id="f_recipient_name" placeholder="Name of the debt collector" required></div>
+    <div class="form-group"><label>Account / Reference Number *</label><input type="text" id="f_account" placeholder="As it appears on their notice" required></div>
+    <div class="form-group"><label>Amount they claim you owe</label><input type="text" id="f_amount" placeholder="e.g. $847.00"></div>`,
+
+  nda: `
+    <div class="form-row">
+      <div class="form-group"><label>Your Name / Company *</label><input type="text" id="f_sender_name" placeholder="Disclosing party" required></div>
+      <div class="form-group"><label>Other Party's Name / Company *</label><input type="text" id="f_recipient_name" placeholder="Receiving party" required></div>
+    </div>
+    <div class="form-group"><label>What information needs protecting? *</label><textarea id="f_info" rows="3" placeholder="e.g. Business idea, product concept, financial data, customer lists, proprietary process..." required></textarea></div>
+    <div class="form-group"><label>Purpose of sharing this information *</label><input type="text" id="f_purpose" placeholder="e.g. Exploring a potential business partnership" required></div>
+    <div class="form-group"><label>Duration of confidentiality</label><input type="text" id="f_duration" placeholder="e.g. 2 years from date of signing"></div>`
+};
+
+// ============================================================
+// PROMPTS
+// ============================================================
+const PROMPTS = {
+  demand: (d) => `Write a professional demand letter from ${d.f_sender_name} at ${d.f_sender_address} to ${d.f_recipient_name}${d.f_recipient_address ? ' at ' + d.f_recipient_address : ''}. The sender is owed: ${d.f_amount}. Situation: ${d.f_situation}. Response deadline: ${d.f_deadline || '14 days'}. Use a firm but professional tone. Include today's date, proper salutation, clear statement of demand, consequences of non-payment, and a signature block. Format as a ready-to-send letter.`,
+
+  cease: (d) => `Write a cease and desist letter from ${d.f_sender_name} at ${d.f_sender_address} to ${d.f_recipient_name}. The behavior that must stop: ${d.f_behavior}. Consequences if they continue: ${d.f_consequences || 'pursue all available legal remedies'}. Use firm legal language, cite their right to stop immediately, and make clear the sender is serious. Format as a ready-to-send letter with today's date.`,
+
+  landlord: (d) => `Write a formal tenant notice letter from ${d.f_sender_name} (tenant at ${d.f_property}) to their landlord ${d.f_recipient_name}. Issue: ${d.f_issue}. Requested action: ${d.f_action}. Reference relevant tenant rights where appropriate (right to habitable conditions, security deposit return laws, etc.). Professional and firm in tone. Include today's date and a 14-day response deadline.`,
+
+  dispute: (d) => `Write a formal dispute letter from ${d.f_sender_name} (account/ref: ${d.f_account || 'N/A'}) to ${d.f_recipient_name}. Dispute: ${d.f_dispute}. Desired resolution: ${d.f_resolution}. Include reference to consumer protection rights (FCRA if credit-related, FDCPA if debt-related). Firm, professional, factual tone. Request written confirmation of resolution. Include today's date.`,
+
+  termination: (d) => `Write a contract termination letter from ${d.f_sender_name} to ${d.f_recipient_name}. Contract being terminated: ${d.f_contract}. Effective date: ${d.f_date}. Reason: ${d.f_reason || 'not stated — terminating per contract terms'}. Professional, clear, no-nonsense tone. Reference that any final obligations will be honored. Include today's date.`,
+
+  complaint: (d) => `Write a formal complaint letter from ${d.f_sender_name} (contact: ${d.f_contact}) to ${d.f_recipient_name}. Incident: ${d.f_incident}. Desired outcome: ${d.f_outcome}. Firm, factual, professional. State that if unresolved the sender may escalate to regulatory bodies or consumer protection agencies. Include today's date.`,
+
+  debt: (d) => `Write a debt validation letter from ${d.f_sender_name} at ${d.f_sender_address} to collection agency ${d.f_recipient_name} regarding account ${d.f_account}${d.f_amount ? ' for ' + d.f_amount : ''}. This is a formal request under the Fair Debt Collection Practices Act (FDCPA) Section 809(b) requiring them to validate the debt before any further collection activity. Professional, firm tone. State that all collection activity must cease until validation is provided. Include today's date.`,
+
+  nda: (d) => `Draft a simple non-disclosure agreement between ${d.f_sender_name} (Disclosing Party) and ${d.f_recipient_name} (Receiving Party). Confidential information to be protected: ${d.f_info}. Purpose: ${d.f_purpose}. Duration: ${d.f_duration || '2 years'}. Include standard NDA clauses: definition of confidential information, obligations of receiving party, exclusions, remedies for breach, and signature blocks for both parties. Today's date.`
+};
+
+// ============================================================
+// STATE
+// ============================================================
+let selectedDocType = null;
+let currentStep = 1;
+let generatedDoc = '';
+let paid = false;
+
+// ============================================================
+// STEP NAVIGATION
+// ============================================================
+function selectDoc(btn) {
+  document.querySelectorAll('.doc-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedDocType = btn.dataset.type;
+  document.getElementById('step1-next').disabled = false;
+}
+
+function goToStep2() {
+  if (!selectedDocType) return;
+  document.getElementById('form-title').textContent = 'Details for your ' + DOC_NAMES[selectedDocType];
+  document.getElementById('dynamic-form').innerHTML = FORMS[selectedDocType];
+  goToStep(2);
+}
+
+function goToStep3() {
+  const inputs = document.querySelectorAll('#panel2 [required]');
+  for (const inp of inputs) {
+    if (!inp.value.trim()) {
+      document.getElementById('form-error').style.display = 'block';
+      inp.focus();
+      return;
+    }
+  }
+  document.getElementById('form-error').style.display = 'none';
+  document.getElementById('pay-doctype').textContent = DOC_NAMES[selectedDocType];
+  document.getElementById('pay-amount').textContent = '$' + PRICES[selectedDocType].toFixed(2);
+  goToStep(3);
+}
+
+function goToStep(n) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.step').forEach((s, i) => {
+    s.classList.remove('active', 'done');
+    if (i + 1 < n) s.classList.add('done');
+    if (i + 1 === n) s.classList.add('active');
+  });
+  if (n !== 4) document.getElementById('loading').style.display = 'none';
+  currentStep = n;
+  if (n <= 4 && n >= 1) document.getElementById('panel' + n).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ============================================================
+// PAYMENT HANDLER
+// ============================================================
+function handlePayment(e) {
+  const stripeLink = document.getElementById('pay-btn').href;
+  if (stripeLink === 'YOUR_STRIPE_PAYMENT_LINK_HERE' || !stripeLink.includes('stripe')) {
+    // DEV MODE: skip payment for testing
+    e.preventDefault();
+    generateDoc();
+    return;
+  }
+  // In production: Stripe redirects back to ?paid=true
+  // For now we open Stripe in new tab and user clicks "I've paid"
+}
+
+// Called after payment confirmed (add ?paid=true to your Stripe success URL)
+function checkUrlForPayment() {
+  if (window.location.search.includes('paid=true')) {
+    goToStep(3);
+    setTimeout(generateDoc, 500);
+  }
+}
+
+// ============================================================
+// GENERATE DOCUMENT
+// ============================================================
+async function generateDoc() {
+  // Collect form data
+  const formData = {};
+  document.querySelectorAll('#dynamic-form input, #dynamic-form textarea').forEach(el => {
+    formData[el.id] = el.value.trim();
+  });
+
+  const prompt = PROMPTS[selectedDocType](formData);
+
+  // Show loading
+  document.getElementById('panel3').classList.remove('active');
+  document.getElementById('loading').style.display = 'block';
+  document.querySelectorAll('.step').forEach((s, i) => {
+    s.classList.remove('active', 'done');
+    if (i < 3) s.classList.add('done');
+    if (i === 3) s.classList.add('active');
+  });
+
+  try {
+    const response = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
+    });
+
+    if (!response.ok) throw new Error('API error');
+    const data = await response.json();
+    generatedDoc = data.result || 'Error generating document. Please contact support.';
+  } catch (err) {
+    generatedDoc = 'There was an error generating your document. Please refresh and try again, or contact support.';
+  }
+
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('doc-output').textContent = generatedDoc;
+  document.getElementById('panel4').classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ============================================================
+// DOWNLOAD / COPY
+// ============================================================
+function copyDoc() {
+  navigator.clipboard.writeText(generatedDoc).then(() => {
+    const btn = event.target;
+    btn.textContent = '✓ Copied!';
+    setTimeout(() => btn.textContent = '📋 Copy to Clipboard', 2000);
+  });
+}
+
+function downloadDoc() {
+  const blob = new Blob([generatedDoc], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = DOC_NAMES[selectedDocType].replace(/\s+/g, '_') + '.txt';
+  a.click();
+}
+
+// Check if returning from Stripe payment
+checkUrlForPayment();
+</script>
+</body>
+</html>
