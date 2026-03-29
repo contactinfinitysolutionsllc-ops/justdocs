@@ -101,6 +101,17 @@ footer a{color:var(--accent2);text-decoration:none}
 .auth-gate.show{display:flex}
 .auth-gate-msg{font-size:.82rem;color:var(--muted2);flex:1}
 .auth-gate-btn{font-family:'Syne',sans-serif;font-weight:700;font-size:.78rem;padding:.45rem 1rem;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;text-decoration:none;white-space:nowrap}
+
+.btn-sub{font-family:'Syne',sans-serif;font-weight:700;font-size:.78rem;padding:.45rem 1rem;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;text-decoration:none;white-space:nowrap;transition:background .18s}
+.btn-sub:hover{background:var(--accent2)}
+.btn-sub.signed-in{background:transparent;border:1px solid rgba(52,211,153,.3);color:var(--green);cursor:default}
+.sub-bar{background:rgba(79,142,255,.06);border:1px solid rgba(79,142,255,.15);border-radius:12px;padding:.75rem 1rem;display:flex;gap:.75rem;align-items:center;margin-bottom:1.2rem;flex-wrap:wrap;transition:all .3s}
+.sub-bar.signed-in{background:rgba(52,211,153,.06);border-color:rgba(52,211,153,.2)}
+.sub-bar-lbl{font-size:.8rem;color:var(--muted2);flex:1;line-height:1.5}
+.sub-bar-lbl.ok{color:var(--green)}
+.btn-sub{font-family:'Syne',sans-serif;font-weight:700;font-size:.78rem;padding:.45rem 1rem;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;text-decoration:none;white-space:nowrap;transition:background .18s}
+.btn-sub:hover{background:var(--accent2)}
+.btn-sub.signed-in{background:transparent;border:1px solid rgba(52,211,153,.3);color:var(--green)}
 </style>
 </head>
 <body>
@@ -112,6 +123,11 @@ footer a{color:var(--accent2);text-decoration:none}
     <span class="nav-badge">JustDocs AI</span>
   </div>
 </nav>
+
+<div class="sub-bar" id="sub-bar">
+    <span class="sub-bar-lbl" id="sub-bar-lbl">Sign in to use this tool.</span>
+    <a href="https://contactinfinitysolutionsllc-ops.github.io/account/" id="sub-bar-btn" class="btn-sub">Sign In →</a>
+  </div>
 
 <div class="hero">
   <div class="hero-glow"></div>
@@ -298,14 +314,31 @@ if(window.location.search.includes('paid=true')){
 
 // ── SESSION AUTH ─────────────────────────────────────────────────────────
 function getStoredSession() {
-  const token = localStorage.getItem('ig_account_token');
-  const email = localStorage.getItem('ig_account_email');
-  const name  = localStorage.getItem('ig_account_name') || email;
+  let token = localStorage.getItem('ig_account_token');
+  let email = localStorage.getItem('ig_account_email');
+  let name  = localStorage.getItem('ig_account_name') || email;
+  if (!token) {
+    try {
+      const raw = localStorage.getItem('sb-zcvkgevcrgsujnqovxgd-auth-token');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        const sess = parsed?.currentSession || parsed?.session || parsed;
+        token = sess?.access_token;
+        email = sess?.user?.email;
+        name  = sess?.user?.user_metadata?.name || email;
+        if (token) {
+          localStorage.setItem('ig_account_token', token);
+          localStorage.setItem('ig_account_email', email || '');
+          if (name) localStorage.setItem('ig_account_name', name);
+        }
+      }
+    } catch(e) {}
+  }
   if (!token || !email) return null;
   try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    if (payload.exp && Date.now() / 1000 > payload.exp) {
-      localStorage.removeItem('ig_account_token');
+    const p = JSON.parse(atob(token.split('.')[1]));
+    if (p.exp && Date.now()/1000 > p.exp) {
+      ['ig_account_token','ig_account_email','ig_account_name'].forEach(k=>localStorage.removeItem(k));
       return null;
     }
   } catch(e) { return null; }
@@ -328,6 +361,33 @@ function requireAuth(action) {
   });
 })();
 
+
+function showSignedInBar(name, email) {
+  const bar = document.getElementById('sub-bar');
+  const lbl = document.getElementById('sub-bar-lbl');
+  const btn = document.getElementById('sub-bar-btn');
+  if (bar) bar.classList.add('signed-in');
+  if (lbl) { lbl.textContent = '✓ Signed in as ' + (name || email); lbl.classList.add('ok'); }
+  if (btn) { btn.textContent = 'My Account'; btn.classList.add('signed-in');
+             btn.href = 'https://contactinfinitysolutionsllc-ops.github.io/account/'; }
+}
+function showSignInBar() {
+  const bar = document.getElementById('sub-bar');
+  const lbl = document.getElementById('sub-bar-lbl');
+  const btn = document.getElementById('sub-bar-btn');
+  if (bar) bar.classList.remove('signed-in');
+  if (lbl) { lbl.textContent = 'Sign in to use this tool.'; lbl.classList.remove('ok'); }
+  if (btn) { btn.textContent = 'Sign In →'; btn.classList.remove('signed-in');
+             btn.href = 'https://contactinfinitysolutionsllc-ops.github.io/account/?return=' + encodeURIComponent(window.location.href); }
+}
+(function() {
+  const s = getStoredSession();
+  if (s) showSignedInBar(s.name, s.email);
+  else {
+    showSignInBar();
+    window.addEventListener('ig_signed_in', e => showSignedInBar(e.detail?.name, e.detail?.email));
+  }
+})();
 </script>
 <script src="https://contactinfinitysolutionsllc-ops.github.io/account/ig-account.js"></script>
 </body>
