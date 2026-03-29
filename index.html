@@ -96,6 +96,11 @@ input::placeholder,textarea::placeholder{color:var(--muted)}
 footer{text-align:center;padding:1.5rem;font-size:.72rem;color:var(--muted);border-top:1px solid var(--border)}
 footer a{color:var(--accent2);text-decoration:none}
 @media(max-width:540px){.form-row{grid-template-columns:1fr}nav{padding:1rem 1.2rem}.step-tab{font-size:.62rem;padding:.6rem .3rem}}
+
+.auth-gate{background:rgba(79,142,255,.07);border:1px solid rgba(79,142,255,.18);border-radius:12px;padding:1rem 1.2rem;margin-bottom:1rem;display:none;align-items:center;gap:.8rem;flex-wrap:wrap}
+.auth-gate.show{display:flex}
+.auth-gate-msg{font-size:.82rem;color:var(--muted2);flex:1}
+.auth-gate-btn{font-family:'Syne',sans-serif;font-weight:700;font-size:.78rem;padding:.45rem 1rem;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;text-decoration:none;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -290,6 +295,39 @@ if(window.location.search.includes('paid=true')){
     setTimeout(generateDoc,400);
   }
 }
+
+// ── SESSION AUTH ─────────────────────────────────────────────────────────
+function getStoredSession() {
+  const token = localStorage.getItem('ig_account_token');
+  const email = localStorage.getItem('ig_account_email');
+  const name  = localStorage.getItem('ig_account_name') || email;
+  if (!token || !email) return null;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    if (payload.exp && Date.now() / 1000 > payload.exp) {
+      localStorage.removeItem('ig_account_token');
+      return null;
+    }
+  } catch(e) { return null; }
+  return { token, email, name };
+}
+
+function requireAuth(action) {
+  const session = getStoredSession();
+  if (session) { action(); return; }
+  const gate = document.getElementById('auth-gate');
+  if (gate) { gate.classList.add('show'); gate.scrollIntoView({behavior:'smooth'}); }
+}
+
+(function checkSessionOnLoad() {
+  const session = getStoredSession();
+  const gate = document.getElementById('auth-gate');
+  if (!session && gate) gate.classList.add('show');
+  window.addEventListener('ig_signed_in', () => {
+    if (gate) gate.classList.remove('show');
+  });
+})();
+
 </script>
 <script src="https://contactinfinitysolutionsllc-ops.github.io/account/ig-account.js"></script>
 </body>
