@@ -189,6 +189,7 @@ footer a{color:var(--accent2);text-decoration:none}
       <div class="pay-row total"><span class="lbl">Total</span><span class="val" id="pay-amt">$3.99</span></div>
     </div>
     <button class="btn btn-primary" id="pay-btn" onclick="handlePay(event)">Pay Securely with Square →</button>
+    <div id="pay-error" style="display:none;margin-top:.7rem;padding:.6rem .85rem;border-radius:8px;font-size:.82rem;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.25);color:#ff6b6b;line-height:1.5"></div>
     <p class="secure-note"><span>🔒 Secured by Square</span> · Your card never touches our servers · Instant access after payment</p>
   </div>
 
@@ -253,9 +254,14 @@ let docType=null,genDoc='';
 function selectDoc(btn){document.querySelectorAll('.doc-btn').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');docType=btn.dataset.type;document.getElementById('next1').disabled=false;}
 function goStep2(){if(!docType)return;document.getElementById('form-title').textContent='Details for your '+NAMES[docType];document.getElementById('dyn-form').innerHTML=FORMS[docType];goStep(2);}
 function goStep3(){const inputs=document.querySelectorAll('#panel2 [required]');for(const i of inputs){if(!i.value.trim()){document.getElementById('form-err').style.display='block';i.focus();return;}}document.getElementById('form-err').style.display='none';document.getElementById('pay-type').textContent=NAMES[docType];document.getElementById('pay-amt').textContent='$'+PRICES[docType].toFixed(2);goStep(3);}
+function showPayErr(msg){const el=document.getElementById('pay-error');if(el){el.textContent=msg;el.style.display='block';}}
+function clearPayErr(){const el=document.getElementById('pay-error');if(el)el.style.display='none';}
+
 async function handlePay(e){
   e.preventDefault();
+  clearPayErr();
   const btn=document.getElementById('pay-btn');
+  const orig=btn.textContent;
   btn.textContent='Creating payment link…';
   btn.disabled=true;
   const fd={};
@@ -268,14 +274,14 @@ async function handlePay(e){
     if(data.url){
       window.location.href=data.url;
     }else{
-      btn.textContent='Pay Securely with Square →';
+      btn.textContent=orig;
       btn.disabled=false;
-      alert('Could not create payment link. Please try again.');
+      showPayErr('Could not create payment link. Please try again.');
     }
   }catch(err){
-    btn.textContent='Pay Securely with Square →';
+    btn.textContent=orig;
     btn.disabled=false;
-    alert('Payment error. Please try again.');
+    showPayErr('Payment error. Please try again.');
   }
 }
 async function generateDoc(){
@@ -285,7 +291,7 @@ async function generateDoc(){
   document.getElementById('loading').style.display='block';
   setSteps(4);
   try{
-    const res=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'claude',prompt})});
+    const res=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'claude',prompt,email:getStoredSession()?.email||localStorage.getItem('ig_account_email')||''})});
     const data=await res.json();
     genDoc=data.result||'Error generating document. Please contact support.';
   }catch(err){genDoc='There was an error generating your document. Please try again or contact contact.infinitysolutionsllc@gmail.com';}
@@ -294,8 +300,8 @@ async function generateDoc(){
   document.getElementById('panel4').classList.add('active');
   window.scrollTo({top:0,behavior:'smooth'});
 }
-function copyDoc(){navigator.clipboard.writeText(genDoc).then(()=>{const b=event.target;b.textContent='✓ Copied!';setTimeout(()=>b.textContent='📋 Copy',2000);});}
-function dlDoc(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([genDoc],{type:'text/plain'}));a.download=NAMES[docType].replace(/\s+/g,'_')+'.txt';a.click();}
+function copyDoc(){const b=event.target;const orig=b.textContent;navigator.clipboard.writeText(genDoc).then(()=>{b.textContent='✓ Copied!';setTimeout(()=>b.textContent=orig,2000);});}
+function dlDoc(){const date=new Date().toISOString().slice(0,10);const a=document.createElement('a');a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(genDoc);a.download=NAMES[docType].replace(/\s+/g,'_')+'-'+date+'.txt';a.click();}
 function goStep(n){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));document.getElementById('loading').style.display='none';if(n>=1&&n<=4)document.getElementById('panel'+n).classList.add('active');setSteps(n);window.scrollTo({top:0,behavior:'smooth'});}
 function setSteps(active){for(let i=1;i<=4;i++){const t=document.getElementById('s'+i);t.classList.remove('active','done');if(i<active)t.classList.add('done');if(i===active)t.classList.add('active');}}
 if(window.location.search.includes('paid=true')){
@@ -389,6 +395,5 @@ function showSignInBar() {
   }
 })();
 </script>
-<script src="https://contactinfinitysolutionsllc-ops.github.io/account/ig-account.js"></script>
 </body>
 </html>
